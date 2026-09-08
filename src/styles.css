@@ -202,8 +202,9 @@ svg {
   display: flex;
 }
 
-.nav-row:hover .nav-count,
-.nav-row:focus-within .nav-count {
+/* Scoped to rows with hover actions — otherwise Trash's count blinks out on hover. */
+.nav-row:has(.nav-row-actions):hover .nav-count,
+.nav-row:has(.nav-row-actions):focus-within .nav-count {
   display: none;
 }
 
@@ -243,6 +244,49 @@ svg {
   margin: 4px 10px;
   font-size: 13px;
   color: var(--muted);
+}
+
+/* sidebar-nav is flex:1, so auto margin pins Trash just above Export / Import. */
+.nav-trash {
+  margin-top: auto;
+  padding-top: 12px;
+}
+
+/* ---------- trash ---------- */
+
+.trash-bar {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 10px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.trash-note {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.task.is-trashed {
+  align-items: center;
+  padding-left: 10px;
+}
+
+.task.is-trashed .task-title {
+  color: var(--muted);
+}
+
+.task-body-static {
+  cursor: default;
+}
+
+.trash-actions {
+  display: flex;
+  gap: 14px;
+  flex: none;
+  padding-left: 12px;
 }
 
 .sidebar-foot {

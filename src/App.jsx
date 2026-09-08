@@ -4,9 +4,10 @@ import Sidebar from './components/Sidebar.jsx'
 import TaskDetail from './components/TaskDetail.jsx'
 import TaskList from './components/TaskList.jsx'
 import Toast from './components/Toast.jsx'
+import TrashView from './components/TrashView.jsx'
 import { useStore } from './hooks/useStore.js'
 import { useTheme } from './hooks/useTheme.js'
-import { sortTasks, todayStr } from './lib/model.js'
+import { isTrashed, sortTasks, todayStr } from './lib/model.js'
 import { exportStore, parseImport } from './lib/storage.js'
 
 export default function App() {
@@ -18,7 +19,10 @@ export default function App() {
     addTask,
     updateTask,
     toggleTask,
-    deleteTask,
+    trashTask,
+    restoreTask,
+    purgeTask,
+    emptyTrash,
     clearCompleted,
     addList,
     renameList,
@@ -43,7 +47,7 @@ export default function App() {
   }, [store.lists, view])
 
   const selected = useMemo(
-    () => store.tasks.find((t) => t.id === selectedId) || null,
+    () => store.tasks.find((t) => t.id === selectedId && !isTrashed(t)) || null,
     [store.tasks, selectedId],
   )
 
@@ -51,17 +55,23 @@ export default function App() {
     const byList = {}
     let inbox = 0
     let todayCount = 0
+    let trash = 0
     for (const task of store.tasks) {
+      if (isTrashed(task)) {
+        trash += 1
+        continue
+      }
       if (task.done) continue
       if (task.listId) byList[task.listId] = (byList[task.listId] || 0) + 1
       else inbox += 1
       if (task.due && task.due <= today) todayCount += 1
     }
-    return { byList, inbox, today: todayCount }
+    return { byList, inbox, today: todayCount, trash }
   }, [store.tasks, today])
 
   const visible = useMemo(() => {
     const inView = store.tasks.filter((task) => {
+      if (isTrashed(task)) return false
       if (view.type === 'inbox') return task.listId === null
       if (view.type === 'list') return task.listId === view.id
       // Today: due today or earlier. Completed items stay out of this view.
@@ -75,13 +85,28 @@ export default function App() {
     }
   }, [store.tasks, view, today])
 
+  const trashed = useMemo(
+    () =>
+      store.tasks
+        .filter(isTrashed)
+        .sort((a, b) => b.deletedAt - a.deletedAt),
+    [store.tasks],
+  )
+
   const currentList = view.type === 'list' ? store.lists.find((l) => l.id === view.id) : null
-  const heading = view.type === 'inbox' ? 'Inbox' : view.type === 'today' ? 'Today' : currentList?.name || ''
+  const heading =
+    view.type === 'inbox'
+      ? 'Inbox'
+      : view.type === 'today'
+        ? 'Today'
+        : view.type === 'trash'
+          ? 'Trash'
+          : currentList?.name || ''
 
   const listNameFor = useCallback(
     (task) => {
-      // Only useful in Today, where tasks come from everywhere.
-      if (view.type !== 'today') return null
+      // Only useful where tasks are gathered from everywhere.
+      if (view.type !== 'today' && view.type !== 'trash') return null
       if (!task.listId) return 'Inbox'
       return store.lists.find((l) => l.id === task.listId)?.name || null
     },
@@ -150,6 +175,8 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [])
 
+  const countLabel = view.type === 'trash' ? trashed.length : visible.active.length
+
   const emptyMessage =
     view.type === 'today'
       ? 'Nothing due today.'
@@ -192,36 +219,51 @@ export default function App() {
           </button>
           <h1 className="main-title">{heading}</h1>
           <span className="main-count">
-            {visible.active.length} open
+            {countLabel} task{countLabel === 1 ? '' : 's'}
           </span>
         </header>
 
-        <QuickAdd
-          inputRef={quickAddRef}
-          placeholder={
-            view.type === 'today' ? 'Add a task for today' : `Add a task to ${heading || 'this list'}`
-          }
-          onAdd={handleAdd}
-        />
+        {view.type === 'trash' ? (
+          <TrashView
+            tasks={trashed}
+            listNameFor={listNameFor}
+            today={today}
+            onRestore={restoreTask}
+            onPurge={purgeTask}
+            onEmpty={emptyTrash}
+          />
+        ) : (
+          <>
+            <QuickAdd
+              inputRef={quickAddRef}
+              placeholder={
+                view.type === 'today'
+                  ? 'Add a task for today'
+                  : `Add a task to ${heading || 'this list'}`
+              }
+              onAdd={handleAdd}
+            />
 
-        <TaskList
-          active={visible.active}
-          completed={visible.completed}
-          listNameFor={listNameFor}
-          selectedId={selectedId}
-          today={today}
-          emptyMessage={emptyMessage}
-          onToggle={toggleTask}
-          onOpen={setSelectedId}
-          onDelete={(id) => {
-            if (id === selectedId) setSelectedId(null)
-            deleteTask(id)
-          }}
-          onClearCompleted={(ids) => {
-            if (ids.includes(selectedId)) setSelectedId(null)
-            clearCompleted(ids)
-          }}
-        />
+            <TaskList
+              active={visible.active}
+              completed={visible.completed}
+              listNameFor={listNameFor}
+              selectedId={selectedId}
+              today={today}
+              emptyMessage={emptyMessage}
+              onToggle={toggleTask}
+              onOpen={setSelectedId}
+              onDelete={(id) => {
+                if (id === selectedId) setSelectedId(null)
+                trashTask(id)
+              }}
+              onClearCompleted={(ids) => {
+                if (ids.includes(selectedId)) setSelectedId(null)
+                clearCompleted(ids)
+              }}
+            />
+          </>
+        )}
       </main>
 
       {selected && (
@@ -233,7 +275,7 @@ export default function App() {
           onToggle={toggleTask}
           onDelete={(id) => {
             setSelectedId(null)
-            deleteTask(id)
+            trashTask(id)
           }}
           onClose={() => setSelectedId(null)}
         />

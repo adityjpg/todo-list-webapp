@@ -27,7 +27,13 @@ export function makeTask(title, listId = null) {
     done: false,
     createdAt: Date.now(),
     completedAt: null,
+    deletedAt: null,
   }
+}
+
+/** A task in the trash — soft-deleted, hidden from every other view. */
+export function isTrashed(task) {
+  return task.deletedAt !== null && task.deletedAt !== undefined
 }
 
 /** Local calendar day as YYYY-MM-DD — avoids the UTC shift of toISOString(). */
@@ -63,6 +69,12 @@ export function formatDue(due, today = todayStr()) {
     day: 'numeric',
     ...(sameYear ? {} : { year: 'numeric' }),
   })
+}
+
+/** Short label for a timestamp, e.g. "Today", "Yesterday", "Mar 4". */
+export function formatWhen(ts, today = todayStr()) {
+  if (!Number.isFinite(ts)) return ''
+  return formatDue(todayStr(new Date(ts)), today)
 }
 
 /** Active tasks first by due date (undated last), then oldest first. */

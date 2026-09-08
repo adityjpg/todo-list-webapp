@@ -66,25 +66,73 @@ export function useStore() {
     }))
   }, [])
 
-  const deleteTask = useCallback(
+  /** Deleting is a move to the trash, never a destructive write. */
+  const trashTask = useCallback(
     (id) => {
       setStore((s) => {
         const task = s.tasks.find((t) => t.id === id)
         if (!task) return s
-        offerUndo(`Deleted “${task.title}”`, s)
+        offerUndo(`Moved “${task.title}” to Trash`, s)
+        return {
+          ...s,
+          tasks: s.tasks.map((t) => (t.id === id ? { ...t, deletedAt: Date.now() } : t)),
+        }
+      })
+    },
+    [offerUndo],
+  )
+
+  const restoreTask = useCallback((id) => {
+    setStore((s) => {
+      const listIds = new Set(s.lists.map((l) => l.id))
+      return {
+        ...s,
+        tasks: s.tasks.map((t) =>
+          t.id === id
+            ? {
+                ...t,
+                deletedAt: null,
+                // Its list may have been deleted in the meantime — land it in the Inbox.
+                listId: t.listId && listIds.has(t.listId) ? t.listId : null,
+              }
+            : t,
+        ),
+      }
+    })
+  }, [])
+
+  const purgeTask = useCallback(
+    (id) => {
+      setStore((s) => {
+        const task = s.tasks.find((t) => t.id === id)
+        if (!task) return s
+        offerUndo(`Deleted “${task.title}” for good`, s)
         return { ...s, tasks: s.tasks.filter((t) => t.id !== id) }
       })
     },
     [offerUndo],
   )
 
+  const emptyTrash = useCallback(() => {
+    setStore((s) => {
+      const count = s.tasks.filter((t) => t.deletedAt).length
+      if (!count) return s
+      offerUndo(`Deleted ${count} task${count === 1 ? '' : 's'} for good`, s)
+      return { ...s, tasks: s.tasks.filter((t) => !t.deletedAt) }
+    })
+  }, [offerUndo])
+
   const clearCompleted = useCallback(
     (taskIds) => {
       const ids = new Set(taskIds)
       if (!ids.size) return
       setStore((s) => {
-        offerUndo(`Cleared ${ids.size} completed task${ids.size === 1 ? '' : 's'}`, s)
-        return { ...s, tasks: s.tasks.filter((t) => !ids.has(t.id)) }
+        offerUndo(`Moved ${ids.size} completed task${ids.size === 1 ? '' : 's'} to Trash`, s)
+        const now = Date.now()
+        return {
+          ...s,
+          tasks: s.tasks.map((t) => (ids.has(t.id) ? { ...t, deletedAt: now } : t)),
+        }
       })
     },
     [offerUndo],
@@ -142,7 +190,10 @@ export function useStore() {
     addTask,
     updateTask,
     toggleTask,
-    deleteTask,
+    trashTask,
+    restoreTask,
+    purgeTask,
+    emptyTrash,
     clearCompleted,
     addList,
     renameList,

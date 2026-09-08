@@ -33,6 +33,7 @@ function cleanTask(raw, listIds) {
     done: raw.done === true,
     createdAt: Number.isFinite(raw.createdAt) ? raw.createdAt : Date.now(),
     completedAt: Number.isFinite(raw.completedAt) ? raw.completedAt : null,
+    deletedAt: Number.isFinite(raw.deletedAt) ? raw.deletedAt : null,
   }
 }
 

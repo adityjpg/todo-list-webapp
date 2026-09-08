@@ -24,6 +24,11 @@ The build output in `dist/` is a plain static site — drop it on any static hos
   dated today so it doesn't disappear the moment you type it.
 - **Lists** — create with `+` in the sidebar, rename or delete on hover. Deleting a list
   keeps its tasks; they fall back to the Inbox.
+- **Trash** — pinned at the bottom of the sidebar, above Export / Import. Deleting a task
+  moves it here rather than destroying it; **Restore** puts it back (in the Inbox, if its
+  list is gone) and **Delete forever** removes it for good. Clearing completed tasks routes
+  through here too, and **Empty trash** clears the lot. Nothing in the trash counts toward
+  any other view.
 
 **Tasks**
 
@@ -35,8 +40,9 @@ Completed tasks drop into a collapsed **Completed** group at the bottom of the v
 
 **Undo**
 
-Deleting a task or a list, clearing completed, and importing a backup all show an undo
-toast for six seconds instead of a confirmation dialog.
+Every destructive action — trashing a task, Delete forever, emptying the trash, deleting a
+list, importing a backup — shows an undo toast for six seconds instead of a confirmation
+dialog. Even a permanent delete is recoverable until that toast expires.
 
 **Keyboard**
 
@@ -57,13 +63,14 @@ Everything is stored in `localStorage`:
 {
   version: 1,
   lists: [{ id, name, createdAt }],
-  tasks: [{ id, listId, title, notes, due, done, createdAt, completedAt }]
+  tasks: [{ id, listId, title, notes, due, done, createdAt, completedAt, deletedAt }]
 }
 ```
 
 `listId: null` means the Inbox — there's no Inbox record, which is what lets a deleted
-list hand its tasks back safely. `due` is a plain `YYYY-MM-DD` local date, so there's no
-timezone arithmetic anywhere.
+list hand its tasks back safely. `deletedAt` is the trash: a timestamp means the task sits
+in it, `null` means it's live — so an ordinary delete is never a destructive write. `due` is
+a plain `YYYY-MM-DD` local date, so there's no timezone arithmetic anywhere.
 
 **Export** downloads `todo-backup-YYYY-MM-DD.json`. **Import** validates the file field by
 field, drops anything malformed, and replaces the store — with an undo toast holding your
@@ -83,7 +90,7 @@ src/
   lib/storage.js       load/save, validation, export/import
   hooks/useStore.js    the store and every mutation, with undo
   hooks/useTheme.js    theme state
-  components/          Sidebar, QuickAdd, TaskList, TaskItem, TaskDetail, Toast
+  components/          Sidebar, QuickAdd, TaskList, TaskItem, TaskDetail, TrashView, Toast
 ```
 
 Theming is CSS custom properties on `:root`, overridden under `[data-theme="dark"]`. A

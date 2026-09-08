@@ -18,6 +18,14 @@ function TodayIcon() {
   )
 }
 
+function TrashIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M5.5 7h13M9.8 7V5.4a1.2 1.2 0 0 1 1.2-1.2h2a1.2 1.2 0 0 1 1.2 1.2V7M7.2 7l.8 11.4a1.4 1.4 0 0 0 1.4 1.3h5.2a1.4 1.4 0 0 0 1.4-1.3L17.8 7" />
+    </svg>
+  )
+}
+
 function ListIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -234,6 +242,16 @@ export default function Sidebar({
         {!lists.length && !adding && (
           <p className="nav-empty">No lists yet. Use + to create one.</p>
         )}
+
+        <div className="nav-trash">
+          <NavItem
+            icon={<TrashIcon />}
+            label="Trash"
+            count={counts.trash}
+            active={view.type === 'trash'}
+            onClick={() => onSelectView({ type: 'trash' })}
+          />
+        </div>
       </nav>
 
       <div className="sidebar-foot">
