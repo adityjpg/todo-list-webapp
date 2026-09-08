@@ -16,8 +16,10 @@
   --radius: 8px;
 
   --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
-  /* easeOutCubic: responsive without covering the distance in the first third */
-  --ease-enter: cubic-bezier(0.33, 1, 0.68, 1);
+  /* easeOutCubic — panels open AND close on this. The app's --ease is too
+     front-loaded for a panel exit: it covers 84% of the distance in the first
+     40% of the time, which the eye reads as a snap. */
+  --ease-panel: cubic-bezier(0.33, 1, 0.68, 1);
   --ease-spring: cubic-bezier(0.2, 0.8, 0.3, 1.25);
   --fast: 120ms;
   --base: 180ms;
@@ -92,25 +94,25 @@ svg {
   height: 100%;
   /* Clips the panel while its track opens and closes. */
   overflow: hidden;
-  transition: grid-template-columns 170ms var(--ease);
+  transition: grid-template-columns 200ms var(--ease-panel);
 }
 
 .app.has-detail {
   grid-template-columns: var(--sidebar-w) minmax(0, 1fr) var(--detail-w);
-  transition: grid-template-columns 220ms var(--ease-enter);
+  transition: grid-template-columns 220ms var(--ease-panel);
 }
 
 .scrim {
   display: none;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 170ms var(--ease);
+  transition: opacity 200ms var(--ease-panel);
 }
 
 .scrim.is-open {
   opacity: 1;
   pointer-events: auto;
-  transition: opacity 220ms var(--ease-enter);
+  transition: opacity 220ms var(--ease-panel);
 }
 
 /* ---------- sidebar ---------- */
@@ -1023,11 +1025,11 @@ svg {
     width: min(360px, 100vw);
     box-shadow: var(--shadow);
     z-index: 15;
-    animation: detail-in 220ms var(--ease-enter);
+    animation: detail-in 220ms var(--ease-panel);
   }
 
   .detail.is-closing {
-    animation: detail-out 170ms var(--ease) forwards;
+    animation: detail-out 200ms var(--ease-panel) forwards;
   }
 
   @keyframes detail-in {
@@ -1060,9 +1062,10 @@ svg {
        menu can't be reached by Tab. */
     visibility: hidden;
     transition:
-      transform 170ms var(--ease),
-      box-shadow 170ms var(--ease),
-      visibility 0s linear 170ms;
+      transform 200ms var(--ease-panel),
+      box-shadow 200ms var(--ease-panel),
+      /* Must match the slide above, or the panel blinks out before it lands. */
+      visibility 0s linear 200ms;
     z-index: 25;
   }
 
@@ -1071,8 +1074,8 @@ svg {
     visibility: visible;
     box-shadow: var(--shadow);
     transition:
-      transform 220ms var(--ease-enter),
-      box-shadow 220ms var(--ease-enter),
+      transform 220ms var(--ease-panel),
+      box-shadow 220ms var(--ease-panel),
       visibility 0s;
   }
 

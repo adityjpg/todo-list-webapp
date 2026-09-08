@@ -55,8 +55,11 @@ toast carries a bar that drains over its six-second window, so the time left is 
 rather than guessed. All of it is `transform`/`opacity` only, and all of it is disabled
 under `prefers-reduced-motion`.
 
-On a narrow screen the sidebar slides in over 220ms and out over 170ms, with the scrim
-fading alongside it in both directions. The task detail panel matches: it slides in from
+On a narrow screen the sidebar slides in over 220ms and out over 200ms, with the scrim
+fading alongside it in both directions. Panels open and close on one curve
+(`--ease-panel`, easeOutCubic); the app's general `--ease` is too front-loaded for a
+panel exit — it covers most of the distance in the first third, which the eye reads as
+a snap. The task detail panel matches: it slides in from
 the right on a phone, and on a wide screen its grid column opens and closes rather than
 appearing at full width. `usePresence` (`src/hooks/usePresence.js`) keeps it mounted for
 its exit — opening stays synchronous, only closing waits. The closed sidebar is `visibility: hidden` — set

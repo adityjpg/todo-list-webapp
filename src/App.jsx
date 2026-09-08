@@ -95,7 +95,7 @@ export default function App() {
   )
 
   // The panel outlives `selected` by one animation so it can slide away.
-  const detailTask = usePresence(selected, 200)
+  const detailTask = usePresence(selected, 240)
 
   const currentList = view.type === 'list' ? store.lists.find((l) => l.id === view.id) : null
   const heading =
