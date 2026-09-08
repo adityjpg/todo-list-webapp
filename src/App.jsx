@@ -5,6 +5,7 @@ import TaskDetail from './components/TaskDetail.jsx'
 import TaskList from './components/TaskList.jsx'
 import Toast from './components/Toast.jsx'
 import TrashView from './components/TrashView.jsx'
+import { usePresence } from './hooks/usePresence.js'
 import { useStore } from './hooks/useStore.js'
 import { useTheme } from './hooks/useTheme.js'
 import { formatDue, isTrashed, sortTasks, todayStr } from './lib/model.js'
@@ -92,6 +93,9 @@ export default function App() {
         .sort((a, b) => b.deletedAt - a.deletedAt),
     [store.tasks],
   )
+
+  // The panel outlives `selected` by one animation so it can slide away.
+  const detailTask = usePresence(selected, 200)
 
   const currentList = view.type === 'list' ? store.lists.find((l) => l.id === view.id) : null
   const heading =
@@ -295,10 +299,11 @@ export default function App() {
         </div>
       </main>
 
-      {selected && (
+      {detailTask && (
         <TaskDetail
-          key={selected.id}
-          task={selected}
+          key={detailTask.id}
+          task={detailTask}
+          closing={!selected}
           lists={store.lists}
           onUpdate={updateTask}
           onToggle={toggleTask}

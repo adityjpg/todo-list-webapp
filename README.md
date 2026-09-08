@@ -56,7 +56,10 @@ rather than guessed. All of it is `transform`/`opacity` only, and all of it is d
 under `prefers-reduced-motion`.
 
 On a narrow screen the sidebar slides in over 220ms and out over 170ms, with the scrim
-fading alongside it in both directions. The closed sidebar is `visibility: hidden` — set
+fading alongside it in both directions. The task detail panel matches: it slides in from
+the right on a phone, and on a wide screen its grid column opens and closes rather than
+appearing at full width. `usePresence` (`src/hooks/usePresence.js`) keeps it mounted for
+its exit — opening stays synchronous, only closing waits. The closed sidebar is `visibility: hidden` — set
 only after the slide finishes — so a closed menu can't be reached by Tab.
 
 Animating a row *out* is the only part that isn't plain CSS: a completed task leaves the

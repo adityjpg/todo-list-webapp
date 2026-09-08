@@ -1,7 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import { formatDue, isOverdue, todayStr } from '../lib/model.js'
 
-export default function TaskDetail({ task, lists, onUpdate, onToggle, onDelete, onClose }) {
+export default function TaskDetail({
+  task,
+  lists,
+  closing,
+  onUpdate,
+  onToggle,
+  onDelete,
+  onClose,
+}) {
   const [title, setTitle] = useState(task.title)
 
   // Latest draft + task, so the unmount flush below never reads stale values.
@@ -35,7 +43,11 @@ export default function TaskDetail({ task, lists, onUpdate, onToggle, onDelete, 
   const today = todayStr()
 
   return (
-    <section className="detail" aria-label="Task details">
+    <section
+      className={`detail${closing ? ' is-closing' : ''}`}
+      aria-label="Task details"
+      aria-hidden={closing || undefined}
+    >
       <header className="detail-head">
         <label className="detail-done">
           <input type="checkbox" checked={task.done} onChange={() => onToggle(task.id)} />

@@ -88,12 +88,16 @@ svg {
 
 .app {
   display: grid;
-  grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
+  grid-template-columns: var(--sidebar-w) minmax(0, 1fr) 0;
   height: 100%;
+  /* Clips the panel while its track opens and closes. */
+  overflow: hidden;
+  transition: grid-template-columns 170ms var(--ease);
 }
 
 .app.has-detail {
   grid-template-columns: var(--sidebar-w) minmax(0, 1fr) var(--detail-w);
+  transition: grid-template-columns 220ms var(--ease-enter);
 }
 
 .scrim {
@@ -775,10 +779,16 @@ svg {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  width: var(--detail-w);
   padding: 20px;
   background: var(--surface);
   border-left: 1px solid var(--border);
   overflow-y: auto;
+}
+
+/* Mounted only to play its exit — it must not take clicks on the way out. */
+.detail.is-closing {
+  pointer-events: none;
 }
 
 .detail-head {
@@ -1000,11 +1010,12 @@ svg {
 /* ---------- responsive ---------- */
 
 @media (max-width: 900px) {
+  .app,
   .app.has-detail {
     grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
   }
 
-  .app.has-detail .detail {
+  .detail {
     position: fixed;
     top: 0;
     right: 0;
@@ -1012,6 +1023,23 @@ svg {
     width: min(360px, 100vw);
     box-shadow: var(--shadow);
     z-index: 15;
+    animation: detail-in 220ms var(--ease-enter);
+  }
+
+  .detail.is-closing {
+    animation: detail-out 170ms var(--ease) forwards;
+  }
+
+  @keyframes detail-in {
+    from {
+      transform: translateX(100%);
+    }
+  }
+
+  @keyframes detail-out {
+    to {
+      transform: translateX(100%);
+    }
   }
 }
 
@@ -1068,7 +1096,7 @@ svg {
     padding: 20px 16px 80px;
   }
 
-  .app.has-detail .detail {
+  .detail {
     width: 100vw;
   }
 }
