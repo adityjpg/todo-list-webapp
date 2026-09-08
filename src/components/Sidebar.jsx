@@ -1,6 +1,25 @@
 import { useEffect, useRef, useState } from 'react'
 import ThemeToggle from './ThemeToggle.jsx'
 
+/** Ticks when the count grows, so a task landing in another list gets noticed. */
+function NavCount({ count }) {
+  const [bumped, setBumped] = useState(false)
+  const prev = useRef(count)
+
+  useEffect(() => {
+    if (count > prev.current) {
+      setBumped(true)
+      const timer = setTimeout(() => setBumped(false), 300)
+      prev.current = count
+      return () => clearTimeout(timer)
+    }
+    prev.current = count
+    return undefined
+  }, [count])
+
+  return <span className={`nav-count${bumped ? ' is-bumped' : ''}`}>{count}</span>
+}
+
 function InboxIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -40,7 +59,7 @@ function NavItem({ icon, label, count, active, onClick, children }) {
       <button type="button" className="nav-item" onClick={onClick} aria-current={active}>
         <span className="nav-icon">{icon}</span>
         <span className="nav-label">{label}</span>
-        {count > 0 && <span className="nav-count">{count}</span>}
+        {count > 0 && <NavCount count={count} />}
       </button>
       {children}
     </div>

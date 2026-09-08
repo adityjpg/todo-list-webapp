@@ -1,4 +1,4 @@
-import { formatWhen } from '../lib/model.js'
+import { formatWhen, inlineWhen } from '../lib/model.js'
 
 export default function TrashView({ tasks, listNameFor, today, onRestore, onPurge, onEmpty }) {
   if (!tasks.length) {
@@ -18,9 +18,7 @@ export default function TrashView({ tasks, listNameFor, today, onRestore, onPurg
 
       <ul className="task-group">
         {tasks.map((task) => {
-          const when = formatWhen(task.deletedAt, today)
-          // "Deleted today" reads naturally; a date needs its capital and an "on".
-          const deleted = when === 'Today' || when === 'Yesterday' ? when.toLowerCase() : `on ${when}`
+          const deleted = inlineWhen(formatWhen(task.deletedAt, today))
           const listName = listNameFor(task)
 
           return (

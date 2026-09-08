@@ -15,6 +15,12 @@
   --content-w: 720px;
   --radius: 8px;
 
+  --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+  --ease-spring: cubic-bezier(0.2, 0.8, 0.3, 1.25);
+  --fast: 120ms;
+  --base: 180ms;
+  --slow: 260ms;
+
   color-scheme: light;
 }
 
@@ -139,6 +145,7 @@ svg {
   display: flex;
   align-items: center;
   border-radius: var(--radius);
+  transition: background var(--fast) var(--ease);
 }
 
 .nav-row:hover {
@@ -189,6 +196,22 @@ svg {
   font-size: 12px;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
+}
+
+.nav-count.is-bumped {
+  animation: count-tick var(--slow) var(--ease-spring);
+}
+
+@keyframes count-tick {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.18);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .nav-row-actions {
@@ -321,9 +344,34 @@ svg {
   cursor: pointer;
 }
 
+.icon-btn {
+  transition:
+    background var(--fast) var(--ease),
+    color var(--fast) var(--ease);
+}
+
 .icon-btn:hover {
   background: var(--hover);
   color: var(--text);
+}
+
+.theme-toggle {
+  position: relative;
+}
+
+.theme-icon {
+  position: absolute;
+  inset: 6px;
+  display: block;
+  transition:
+    opacity var(--slow) var(--ease),
+    transform var(--slow) var(--ease);
+}
+
+.theme-icon.is-hidden {
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.6);
+  pointer-events: none;
 }
 
 .icon-btn-sm {
@@ -427,6 +475,23 @@ svg {
   color: var(--muted);
 }
 
+.view {
+  display: contents;
+}
+
+/* The task column fades in on navigation; `display: contents` keeps the layout flat,
+   so the animation goes on the children that actually paint. */
+.view > * {
+  animation: view-in var(--fast) var(--ease);
+}
+
+@keyframes view-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
 /* ---------- tasks ---------- */
 
 .task-group {
@@ -436,12 +501,56 @@ svg {
 }
 
 .task {
+  position: relative;
   display: flex;
   align-items: flex-start;
   gap: 10px;
   padding: 9px 8px 9px 10px;
   border-radius: var(--radius);
   border-bottom: 1px solid var(--border);
+  transition: background var(--fast) var(--ease);
+  animation: row-in 160ms var(--ease);
+}
+
+/* Overdue reads as form, not only color — and survives color-blindness. */
+.task.is-overdue::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--overdue);
+}
+
+/* Kept mounted by useLeavingRows just long enough to collapse out of the list. */
+.task.is-leaving {
+  pointer-events: none;
+  overflow: hidden;
+  animation: row-out var(--base) var(--ease) forwards;
+}
+
+@keyframes row-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+@keyframes row-out {
+  from {
+    opacity: 1;
+    max-height: 64px;
+  }
+  to {
+    opacity: 0;
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-bottom-color: transparent;
+    transform: translateX(-6px);
+  }
 }
 
 .task:last-child {
@@ -457,34 +566,78 @@ svg {
 }
 
 .task-check {
-  appearance: none;
+  position: relative;
   flex: none;
+  display: block;
   width: 17px;
   height: 17px;
   margin: 3px 0 0;
-  border: 1.5px solid var(--muted);
-  border-radius: 50%;
   cursor: pointer;
 }
 
-.task-check:hover {
+.task-check-input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.task-check-box {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 1.5px solid var(--muted);
+  border-radius: 50%;
+  transition:
+    background var(--fast) var(--ease),
+    border-color var(--fast) var(--ease);
+}
+
+.task-check:hover .task-check-box {
   border-color: var(--text);
 }
 
-.task-check:checked {
-  background: var(--accent);
-  border-color: var(--accent);
+.task-check-input:focus-visible + .task-check-box {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
-.task-check:checked::after {
-  content: '';
+.task-check-input:checked + .task-check-box {
+  background: var(--accent);
+  border-color: var(--accent);
+  animation: check-pop var(--slow) var(--ease-spring);
+}
+
+.task-check-mark {
   display: block;
-  width: 4px;
-  height: 8px;
-  margin: 1.5px auto 0;
-  border: solid var(--accent-text);
-  border-width: 0 1.6px 1.6px 0;
-  transform: rotate(45deg);
+  stroke: var(--accent-text);
+  stroke-width: 2.2;
+  /* Hidden by an offset equal to its own length, then drawn in. */
+  stroke-dasharray: 14;
+  stroke-dashoffset: 14;
+}
+
+.task-check-input:checked + .task-check-box .task-check-mark {
+  animation: check-draw var(--base) var(--ease) forwards;
+}
+
+@keyframes check-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(0.86);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes check-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
 }
 
 .task-body {
@@ -560,9 +713,20 @@ svg {
 }
 
 .empty {
-  padding: 24px 10px;
+  padding: 28px 10px;
+  animation: row-in var(--slow) var(--ease);
+}
+
+.empty-headline {
+  margin: 0;
+  font-size: 15px;
+  color: var(--text);
+}
+
+.empty-detail {
+  margin: 4px 0 0;
+  font-size: 13px;
   color: var(--muted);
-  font-size: 14px;
 }
 
 .completed {
@@ -754,6 +918,41 @@ svg {
   border-radius: 10px;
   box-shadow: var(--shadow);
   z-index: 20;
+  overflow: hidden;
+  animation: toast-in var(--slow) var(--ease-spring);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* Drains across the 6s undo window in useStore — keep the two in step. */
+.toast-timer {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: 100%;
+  background: var(--muted);
+  opacity: 0.35;
+  transform-origin: left;
+  animation: toast-drain 6s linear forwards;
+}
+
+@keyframes toast-drain {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
 }
 
 .toast-message {
@@ -853,7 +1052,12 @@ svg {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * {
-    transition: none !important;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

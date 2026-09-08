@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import TaskItem from './TaskItem.jsx'
+import EmptyState from './EmptyState.jsx'
+import { useLeavingRows, leavingIds } from '../hooks/useLeavingRows.js'
 
 export default function TaskList({
   active,
@@ -7,7 +9,7 @@ export default function TaskList({
   listNameFor,
   selectedId,
   today,
-  emptyMessage,
+  empty,
   onToggle,
   onOpen,
   onDelete,
@@ -15,16 +17,21 @@ export default function TaskList({
 }) {
   const [showCompleted, setShowCompleted] = useState(false)
 
+  // Rows that just left are kept mounted briefly so they can animate out.
+  const rendered = useLeavingRows(active)
+  const leaving = leavingIds(rendered, active)
+
   return (
     <div className="task-lists">
-      {active.length ? (
+      {rendered.length ? (
         <ul className="task-group">
-          {active.map((task) => (
+          {rendered.map((task) => (
             <TaskItem
               key={task.id}
               task={task}
               listName={listNameFor(task)}
               selected={task.id === selectedId}
+              leaving={leaving.has(task.id)}
               today={today}
               onToggle={onToggle}
               onOpen={onOpen}
@@ -33,7 +40,7 @@ export default function TaskList({
           ))}
         </ul>
       ) : (
-        <p className="empty">{emptyMessage}</p>
+        <EmptyState headline={empty.headline} detail={empty.detail} />
       )}
 
       {completed.length > 0 && (

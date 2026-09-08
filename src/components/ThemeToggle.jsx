@@ -16,13 +16,15 @@ export default function ThemeToggle({ theme, onToggle }) {
   return (
     <button
       type="button"
-      className="icon-btn"
+      className="icon-btn theme-toggle"
       onClick={onToggle}
       title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
       aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
       aria-pressed={dark}
     >
-      {dark ? SunIcon : MoonIcon}
+      {/* Both icons stay mounted and cross-fade, so a fast double-click can't strand one. */}
+      <span className={`theme-icon${dark ? '' : ' is-hidden'}`}>{SunIcon}</span>
+      <span className={`theme-icon${dark ? ' is-hidden' : ''}`}>{MoonIcon}</span>
     </button>
   )
 }

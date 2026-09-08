@@ -38,11 +38,27 @@ belongs to. Overdue dates are the one bit of color in the app.
 
 Completed tasks drop into a collapsed **Completed** group at the bottom of the view.
 
+Due dates inside the coming week show as weekday names ("Friday") rather than dates.
+Overdue tasks carry a rule down their left edge as well as red text, so the state reads
+without relying on color.
+
 **Undo**
 
 Every destructive action — trashing a task, Delete forever, emptying the trash, deleting a
 list, importing a backup — shows an undo toast for six seconds instead of a confirmation
 dialog. Even a permanent delete is recoverable until that toast expires.
+
+**Motion**
+
+Checking a task off draws the checkmark and collapses the row; new tasks fade in; the undo
+toast carries a bar that drains over its six-second window, so the time left is visible
+rather than guessed. All of it is `transform`/`opacity` only, and all of it is disabled
+under `prefers-reduced-motion`.
+
+Animating a row *out* is the only part that isn't plain CSS: a completed task leaves the
+active list immediately, so there'd be nothing left to animate. `useLeavingRows`
+(`src/hooks/useLeavingRows.js`) keeps the departed row mounted in place for 180ms while
+the store updates straight away — so a reload mid-animation can never lose the write.
 
 **Keyboard**
 
@@ -90,9 +106,16 @@ src/
   lib/storage.js       load/save, validation, export/import
   hooks/useStore.js    the store and every mutation, with undo
   hooks/useTheme.js    theme state
-  components/          Sidebar, QuickAdd, TaskList, TaskItem, TaskDetail, TrashView, Toast
+  hooks/useLeavingRows.js   keeps departing rows mounted so they can animate out
+  hooks/useReducedMotion.js live prefers-reduced-motion state
+  components/          Sidebar, QuickAdd, TaskList, TaskItem, TaskDetail, TrashView,
+                       EmptyState, Toast
 ```
 
 Theming is CSS custom properties on `:root`, overridden under `[data-theme="dark"]`. A
 small inline script in `index.html` stamps the theme onto `<html>` before the bundle loads,
-so dark mode never flashes white on reload.
+so dark mode never flashes white on reload. Motion runs off the same token idea —
+`--fast` / `--base` / `--slow` and two easing curves, so timings stay consistent.
+
+Empty states are written per situation: "you finished everything" and "you never had
+anything" say different things, and an empty Today names the next date something is due.

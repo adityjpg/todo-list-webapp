@@ -1,18 +1,41 @@
 import { formatDue, isOverdue, isDueToday } from '../lib/model.js'
 
-export default function TaskItem({ task, listName, selected, today, onToggle, onOpen, onDelete }) {
+export default function TaskItem({
+  task,
+  listName,
+  selected,
+  leaving,
+  today,
+  onToggle,
+  onOpen,
+  onDelete,
+}) {
   const overdue = isOverdue(task, today)
   const dueToday = isDueToday(task, today)
 
   return (
-    <li className={`task${task.done ? ' is-done' : ''}${selected ? ' is-selected' : ''}`}>
-      <input
-        type="checkbox"
-        className="task-check"
-        checked={task.done}
-        onChange={() => onToggle(task.id)}
-        aria-label={task.done ? `Mark “${task.title}” as not done` : `Complete “${task.title}”`}
-      />
+    <li
+      className={`task${task.done ? ' is-done' : ''}${selected ? ' is-selected' : ''}${
+        overdue ? ' is-overdue' : ''
+      }${leaving ? ' is-leaving' : ''}`}
+    >
+      {/* A label wrapping the real input keeps the native control; the sibling svg is
+          what actually draws, since an <input> can't have children. */}
+      <label className="task-check">
+        <input
+          type="checkbox"
+          className="task-check-input"
+          checked={task.done}
+          onChange={() => onToggle(task.id)}
+          aria-label={task.done ? `Mark “${task.title}” as not done` : `Complete “${task.title}”`}
+        />
+        <span className="task-check-box" aria-hidden="true">
+          <svg className="task-check-mark" viewBox="0 0 16 16" focusable="false">
+            <path d="M4 8.4l2.7 2.7L12 5.6" />
+          </svg>
+        </span>
+      </label>
+
       <button type="button" className="task-body" onClick={() => onOpen(task.id)}>
         <span className="task-title">{task.title}</span>
         <span className="task-meta">
@@ -31,6 +54,7 @@ export default function TaskItem({ task, listName, selected, today, onToggle, on
           )}
         </span>
       </button>
+
       <button
         type="button"
         className="icon-btn icon-btn-sm task-delete"

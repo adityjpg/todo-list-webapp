@@ -8,6 +8,8 @@ export default function Toast({ message, onUndo, onDismiss }) {
       <button type="button" className="toast-close" onClick={onDismiss} aria-label="Dismiss">
         ×
       </button>
+      {/* Drains over the undo window, so the time left is visible rather than guessed. */}
+      <span className="toast-timer" aria-hidden="true" />
     </div>
   )
 }

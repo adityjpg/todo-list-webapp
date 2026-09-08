@@ -63,6 +63,8 @@ export function formatDue(due, today = todayStr()) {
   if (diff === 0) return 'Today'
   if (diff === 1) return 'Tomorrow'
   if (diff === -1) return 'Yesterday'
+  // Inside the coming week a weekday name reads faster than a date.
+  if (diff > 1 && diff < 7) return date.toLocaleDateString(undefined, { weekday: 'long' })
   const sameYear = String(y) === today.slice(0, 4)
   return date.toLocaleDateString(undefined, {
     month: 'short',
@@ -75,6 +77,15 @@ export function formatDue(due, today = todayStr()) {
 export function formatWhen(ts, today = todayStr()) {
   if (!Number.isFinite(ts)) return ''
   return formatDue(todayStr(new Date(ts)), today)
+}
+
+/**
+ * A date label for use mid-sentence: relative words lowercase ("today"), real
+ * dates and weekdays keep their capital ("on Sep 5", "on Thursday").
+ */
+export function inlineWhen(label) {
+  if (!label) return ''
+  return /^(Today|Tomorrow|Yesterday)$/.test(label) ? label.toLowerCase() : `on ${label}`
 }
 
 /** Active tasks first by due date (undated last), then oldest first. */

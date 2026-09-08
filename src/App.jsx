@@ -7,7 +7,7 @@ import Toast from './components/Toast.jsx'
 import TrashView from './components/TrashView.jsx'
 import { useStore } from './hooks/useStore.js'
 import { useTheme } from './hooks/useTheme.js'
-import { isTrashed, sortTasks, todayStr } from './lib/model.js'
+import { formatDue, isTrashed, sortTasks, todayStr } from './lib/model.js'
 import { exportStore, parseImport } from './lib/storage.js'
 
 export default function App() {
@@ -177,12 +177,34 @@ export default function App() {
 
   const countLabel = view.type === 'trash' ? trashed.length : visible.active.length
 
-  const emptyMessage =
-    view.type === 'today'
-      ? 'Nothing due today.'
-      : view.type === 'inbox'
-        ? 'Inbox is clear. Add a task above.'
-        : 'No tasks in this list yet.'
+  // "Finished everything" and "never had anything" are different situations, and
+  // shouldn't share a sentence.
+  const empty = useMemo(() => {
+    const finishedSome = visible.completed.length > 0
+
+    if (view.type === 'today') {
+      const next = store.tasks
+        .filter((t) => !isTrashed(t) && !t.done && t.due && t.due > today)
+        .sort((a, b) => (a.due < b.due ? -1 : 1))[0]
+      return {
+        headline: 'Nothing due today.',
+        detail: next
+          ? `Next up: ${formatDue(next.due, today)}.`
+          : 'Nothing scheduled later, either.',
+      }
+    }
+
+    if (view.type === 'inbox') {
+      return finishedSome
+        ? { headline: 'Inbox is clear.', detail: 'Everything here is finished.' }
+        : { headline: 'Nothing in the Inbox.', detail: 'Press / to add the first one.' }
+    }
+
+    const name = currentList?.name || 'this list'
+    return finishedSome
+      ? { headline: `${name} is clear.`, detail: 'Everything here is finished.' }
+      : { headline: `Nothing in ${name} yet.`, detail: 'Press / to add the first one.' }
+  }, [view.type, visible.completed.length, store.tasks, today, currentList])
 
   return (
     <div className={`app${selected ? ' has-detail' : ''}`}>
@@ -223,6 +245,7 @@ export default function App() {
           </span>
         </header>
 
+        <div className="view" key={view.type === 'list' ? `list-${view.id}` : view.type}>
         {view.type === 'trash' ? (
           <TrashView
             tasks={trashed}
@@ -250,7 +273,7 @@ export default function App() {
               listNameFor={listNameFor}
               selectedId={selectedId}
               today={today}
-              emptyMessage={emptyMessage}
+              empty={empty}
               onToggle={toggleTask}
               onOpen={setSelectedId}
               onDelete={(id) => {
@@ -264,6 +287,7 @@ export default function App() {
             />
           </>
         )}
+        </div>
       </main>
 
       {selected && (
