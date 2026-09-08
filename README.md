@@ -55,6 +55,10 @@ toast carries a bar that drains over its six-second window, so the time left is 
 rather than guessed. All of it is `transform`/`opacity` only, and all of it is disabled
 under `prefers-reduced-motion`.
 
+On a narrow screen the sidebar slides in over 220ms and out over 170ms, with the scrim
+fading alongside it in both directions. The closed sidebar is `visibility: hidden` — set
+only after the slide finishes — so a closed menu can't be reached by Tab.
+
 Animating a row *out* is the only part that isn't plain CSS: a completed task leaves the
 active list immediately, so there'd be nothing left to animate. `useLeavingRows`
 (`src/hooks/useLeavingRows.js`) keeps the departed row mounted in place for 180ms while

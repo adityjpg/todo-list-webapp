@@ -208,7 +208,12 @@ export default function App() {
 
   return (
     <div className={`app${selected ? ' has-detail' : ''}`}>
-      {menuOpen && <div className="scrim" onClick={() => setMenuOpen(false)} />}
+      {/* Always mounted so it can fade out as well as in. */}
+      <div
+        className={`scrim${menuOpen ? ' is-open' : ''}`}
+        onClick={() => setMenuOpen(false)}
+        aria-hidden="true"
+      />
 
       <Sidebar
         lists={store.lists}
